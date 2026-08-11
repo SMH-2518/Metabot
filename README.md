@@ -1,13 +1,16 @@
-# Simplified CGM Medical AI FastAPI Backend
+# CGM Medical AI Inference Engine
 
-A clean, beginner-friendly FastAPI backend for Continuous Glucose Monitoring (CGM) diabetes trajectory prediction and danger risk assessment.
+A clean, beginner-friendly FastAPI backend split into 3 clear files for Continuous Glucose Monitoring (CGM) diabetes trajectory prediction and danger risk assessment.
 
-## 📂 Simplified File Layout
+## 📂 Modular 3-File Architecture
 
 ```
 Metabot/
 │
-├── main.py                  # Single, clean backend script containing all routes & logic
+├── config.py                # 1. Global settings, thresholds, and sequence parameters
+├── model.py                 # 2. TFLite model loader & prediction logic
+├── main.py                  # 3. FastAPI web app, Pydantic schemas, & API endpoints
+│
 ├── models/
 │   └── hybrid_cgm_brain_quantized.tflite  # Quantized TFLite model binary
 ├── requirements.txt         # Dependencies
@@ -29,14 +32,14 @@ Metabot/
    ```
 
 3. **Open Interactive Docs**:
-   - Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-   - ReDoc UI: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+   - **Swagger UI**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+   - **ReDoc UI**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
 ---
 
-## 📊 Data Input Format (3 Hours of Data -> Next 30m Prediction)
+## 📊 Data Input Format (3 Hours of Telemetry -> Next 30m Prediction)
 
-- **`temporal_features`**: Shape `(6, 7)` representing 6 sequence steps spaced 30 minutes apart (total 3 hours of telemetry). Each step has 7 features:
+- **`temporal_features`**: Shape `(6, 7)` representing 6 sequence steps spaced 30 minutes apart (total 3 hours of data: $t-150m, t-120m, t-90m, t-60m, t-30m, t$). Each step has 7 features:
   `[CGM, IOB, basal, COB, time_sin, time_cos, cgm_velocity]`
 - **`static_features`**: Shape `(2,)` representing `[scaled_age, scaled_bmi]`.
 
@@ -61,7 +64,7 @@ Metabot/
   "danger_probability": 0.7158,
   "predicted_status": "DANGER",
   "predicted_cgm_next_30m": 265.9,
-  "routing_recommendation": "CRITICAL RISK: Impending hypo/hyperglycemia detected within 30 mins. Check glucose & IOB immediately.",
+  "routing_recommendation": "CRITICAL RISK: Impending hypo/hyperglycemia within 30 mins. Check glucose & IOB.",
   "inference_engine": "TFLite Model Engine (Quantized)"
 }
 ```
