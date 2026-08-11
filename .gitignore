@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary & Scratch files
+scratch/
+.system_generated/
+.idea/
+.vscode/
+*.log
+
+# Environment variables
+.env
+.venv
+env/
+venv/
