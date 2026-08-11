@@ -1,93 +1,46 @@
-# CGM Medical AI Inference Engine
+# Simplified CGM Medical AI FastAPI Backend
 
-A production-grade, high-performance FastAPI backend for Continuous Glucose Monitoring (CGM) diabetes trajectory prediction and danger risk assessment.
+A clean, beginner-friendly FastAPI backend for Continuous Glucose Monitoring (CGM) diabetes trajectory prediction and danger risk assessment.
 
-## 🏗️ Project Architecture & Modular Layout
+## 📂 Simplified File Layout
 
 ```
-cgm_inference_app/
+Metabot/
 │
-├── app/
-│   ├── __init__.py
-│   ├── main.py                  # Entry point: FastAPI app & router registration
-│   ├── core/
-│   │   ├── __init__.py
-│   │   └── config.py            # Global paths, thresholds, and window configuration
-│   ├── api/
-│   │   ├── __init__.py
-│   │   └── v1/
-│   │       ├── __init__.py
-│   │       └── endpoints/
-│   │           ├── __init__.py
-│   │           └── inference.py # REST endpoints for CGM predictions & batch processing
-│   ├── schemas/
-│   │   ├── __init__.py
-│   │   └── cgm.py               # Pydantic data validation models
-│   └── services/
-│       ├── __init__.py
-│       └── predictor.py         # TFLite model singleton & dynamic inference engine
-│
+├── main.py                  # Single, clean backend script containing all routes & logic
 ├── models/
-│   └── hybrid_cgm_brain_quantized.tflite  # Quantized TFLite prediction model
-├── requirements.txt
-└── README.md
+│   └── hybrid_cgm_brain_quantized.tflite  # Quantized TFLite model binary
+├── requirements.txt         # Dependencies
+└── README.md                # Documentation
 ```
 
 ---
 
-## 📊 Temporal Feature Pipeline & 30-Minute Window Model
+## ⚡ How to Run
 
-The backend is tailored for models transfer-learned on long-term patient telemetry (e.g., 2 months of CGM data) and deployed for real-time inference on short-term window sequences:
+1. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-1. **Temporal History Window (3 Hours)**:
-   - **Sequence Length**: 6 temporal time steps (taken at 30-minute intervals: $t-150m, t-120m, t-90m, t-60m, t-30m, t$).
-   - **Feature Dimension**: 7 features per step:
-     1. `CGM` (Continuous Glucose Reading in mg/dL)
-     2. `IOB` (Insulin On Board)
-     3. `basal` (Basal rate)
-     4. `COB` (Carbohydrates On Board)
-     5. `time_sin` (Cyclic time feature sin component)
-     6. `time_cos` (Cyclic time feature cos component)
-     7. `cgm_velocity` (Glucose rate of change in mg/dL/min)
-   - **Temporal Tensor Shape**: `(1, 6, 7)`
+2. **Start the FastAPI server**:
+   ```bash
+   python -m uvicorn main:app --reload
+   ```
 
-2. **Static Demographics**:
-   - **Feature Dimension**: 2 static features `[scaled_age, scaled_bmi]`
-   - **Static Tensor Shape**: `(1, 2)`
-
-3. **Prediction Horizon (Next 30 Minutes)**:
-   - Outputs danger risk probability ($0.0 \rightarrow 1.0$).
-   - Predicts next 30-minute estimated glucose level ($mg/dL$).
-   - Recommends clinical action (`SAFE`, `EVALUATE`, `DANGER`).
+3. **Open Interactive Docs**:
+   - Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+   - ReDoc UI: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
 ---
 
-## 🚀 Getting Started
+## 📊 Data Input Format (3 Hours of Data -> Next 30m Prediction)
 
-### 1. Install Dependencies
+- **`temporal_features`**: Shape `(6, 7)` representing 6 sequence steps spaced 30 minutes apart (total 3 hours of telemetry). Each step has 7 features:
+  `[CGM, IOB, basal, COB, time_sin, time_cos, cgm_velocity]`
+- **`static_features`**: Shape `(2,)` representing `[scaled_age, scaled_bmi]`.
 
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Run local Dev Server
-
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 3. Interactive API Documentation
-
-- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **ReDoc UI**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
-
----
-
-## 🧪 Example REST Request
-
-### Endpoint: `POST /api/v1/inference/`
-
-#### Request Payload:
+### Example JSON Request (`POST /predict`):
 ```json
 {
   "temporal_features": [
@@ -102,13 +55,13 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 }
 ```
 
-#### Response:
+### Example Response:
 ```json
 {
-  "danger_probability": 0.1245,
-  "predicted_status": "SAFE",
-  "predicted_cgm_next_30m": 178.0,
-  "routing_recommendation": "STABLE: Glucose level and 30-minute predicted trajectory remain within safe target boundaries.",
+  "danger_probability": 0.7158,
+  "predicted_status": "DANGER",
+  "predicted_cgm_next_30m": 265.9,
+  "routing_recommendation": "CRITICAL RISK: Impending hypo/hyperglycemia detected within 30 mins. Check glucose & IOB immediately.",
   "inference_engine": "TFLite Model Engine (Quantized)"
 }
 ```
