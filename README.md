@@ -1,49 +1,134 @@
-# CGM Medical AI Inference Engine
+# 🩸 Proactive Glucose Forecasting Model (GRU-1D) - Metabot API
 
-A clean, beginner-friendly FastAPI backend split into 3 clear files for Continuous Glucose Monitoring (CGM) diabetes trajectory prediction and danger risk assessment.
+[![Live Deployment](https://img.shields.io/badge/Render-Live%20Deployment-brightgreen?logo=render)](https://metabot-aokn.onrender.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-1.0.0-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![TensorFlow Lite](https://img.shields.io/badge/TFLite-Quantized-FF6F00?logo=tensorflow)](https://www.tensorflow.org/lite)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?logo=docker)](https://www.docker.com/)
 
-## 📂 Modular 3-File Architecture
+> **Live Deployment Link**: [https://metabot-aokn.onrender.com/](https://metabot-aokn.onrender.com/)  
+> **Live API Documentation (Swagger)**: [https://metabot-aokn.onrender.com/docs](https://metabot-aokn.onrender.com/docs)
+
+---
+
+## 📌 Project Overview
+
+**Metabot** is a proactive glucose forecasting backend powered by a **1D Gated Recurrent Unit (GRU-1D)** deep-learning model. Rather than merely reacting after a dangerous glucose crash (hypoglycemia) or spike (hyperglycemia) has already occurred, Metabot acts as an early-warning system that predicts a patient's exact blood sugar trajectory **30 minutes into the future**.
+
+### The Core Concept
+By analyzing recent metabolic and physiological history over a rolling 3-hour window, the system estimates upcoming glycemic trends and calculates clinical danger probabilities. Giving patients and automated insulin delivery (AID) systems a 30-minute head start enables proactive intervention before a medical emergency occurs.
+
+### Key Highlights
+- **3-Hour Time Window**: Evaluates 6 rolling time steps sampled at 30-minute intervals ($t-150m, t-120m, t-90m, t-60m, t-30m, t$).
+- **Multi-Variable Telemetry**: Tracks Continuous Glucose Monitoring (CGM), Insulin intake (IOB), Carbohydrate consumption (COB), basal rates, time cyclic features, and glucose velocity/pressure.
+- **Continuous 30-Minute Target**: Forecasts exact continuous blood sugar (mg/dL) and clinical danger status (`SAFE`, `EVALUATE`, `DANGER`).
+
+---
+
+## 🏗️ System Architecture
+
+Metabot uses a clean 3-file modular Python architecture backed by a quantized TensorFlow Lite inference engine:
 
 ```
 Metabot/
 │
-├── config.py                # 1. Global settings, thresholds, and sequence parameters
-├── model.py                 # 2. TFLite model loader & prediction logic
-├── main.py                  # 3. FastAPI web app, Pydantic schemas, & API endpoints
+├── main.py                  # 1. FastAPI application, Pydantic schemas, & API endpoints
+├── model.py                 # 2. TFLite model singleton loader & prediction logic
+├── config.py                # 3. Global constants, sequence parameters, & thresholds
 │
 ├── models/
-│   └── hybrid_cgm_brain_quantized.tflite  # Quantized TFLite model binary
+│   └── hybrid_cgm_brain_quantized.tflite  # Quantized GRU-1D TFLite Model binary
+├── Dockerfile               # Production container definition
+├── render.yaml              # Render deployment configuration
 ├── requirements.txt         # Dependencies
 └── README.md                # Documentation
 ```
 
----
+### Data Pipeline & Prediction Flow
 
-## ⚡ How to Run
-
-1. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Start the FastAPI server**:
-   ```bash
-   python -m uvicorn main:app --reload
-   ```
-
-3. **Open Interactive Docs**:
-   - **Swagger UI**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-   - **ReDoc UI**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+```mermaid
+flowchart TD
+    Client["Patient Sensor / Client App"] -->|3-Hour Window 6x7 Matrix| Main["main.py (FastAPI Endpoint)"]
+    Main -->|Shape Validation| Model["model.py (CGMModelService)"]
+    Model -->|TFLite Tensor Input (1,6,7) & (1,2)| TFLite["models/hybrid_cgm_brain_quantized.tflite"]
+    TFLite -->|Predicts Next 30m Target| Model
+    Model -->|Risk Classification & Recommendations| Main
+    Main -->|JSON Prediction Response| Client
+```
 
 ---
 
-## 📊 Data Input Format (3 Hours of Telemetry -> Next 30m Prediction)
+## 🛠️ Setup Instructions
 
-- **`temporal_features`**: Shape `(6, 7)` representing 6 sequence steps spaced 30 minutes apart (total 3 hours of data: $t-150m, t-120m, t-90m, t-60m, t-30m, t$). Each step has 7 features:
-  `[CGM, IOB, basal, COB, time_sin, time_cos, cgm_velocity]`
-- **`static_features`**: Shape `(2,)` representing `[scaled_age, scaled_bmi]`.
+### Prerequisites
+- **Python**: 3.10 or 3.11 installed
+- **Git**: For cloning the repository
 
-### Example JSON Request (`POST /predict`):
+### 1. Clone the Repository
+```bash
+git clone https://github.com/SMH-2518/Metabot.git
+cd Metabot
+```
+
+### 2. Create and Activate Virtual Environment
+```bash
+# On Windows
+python -m venv venv
+venv\Scripts\activate
+
+# On macOS/Linux
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+---
+
+## 🚀 Steps to Run the Application
+
+### Option A: Run Locally with Uvicorn (Recommended for Development)
+```bash
+python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+```
+- Open local Swagger UI docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+### Option B: Run via Docker Container
+```bash
+# Build the Docker image
+docker build -t metabot-cgm .
+
+# Run the Docker container
+docker run -p 8000:8000 metabot-cgm
+```
+
+---
+
+## 📖 API Documentation & Usage
+
+### Base URLs
+- **Live Render Deployment**: `https://metabot-aokn.onrender.com`
+- **Local Environment**: `http://127.0.0.1:8000`
+
+---
+
+### Endpoints Summary
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/` | Root endpoint checking server status and active engine |
+| `GET` | `/health` | Detailed health check displaying sequence & model parameters |
+| `POST` | `/predict` | Predicts next 30m glucose & danger risk for a 3-hour window |
+| `POST` | `/predict/batch` | Processes batch prediction for multiple patient windows |
+
+---
+
+### Sample API Request (`POST /predict`)
+
+#### Request Body (JSON)
 ```json
 {
   "temporal_features": [
@@ -58,7 +143,24 @@ Metabot/
 }
 ```
 
-### Example Response:
+#### Curl Command
+```bash
+curl -X POST "https://metabot-aokn.onrender.com/predict" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "temporal_features": [
+         [140.0, 1.2, 0.8, 15.0, 0.500, 0.866, 0.20],
+         [142.0, 1.0, 0.8, 10.0, 0.707, 0.707, 0.67],
+         [145.0, 0.8, 0.8,  5.0, 0.866, 0.500, 1.00],
+         [150.0, 0.6, 0.8,  2.0, 0.966, 0.259, 1.67],
+         [158.0, 0.4, 0.8,  0.0, 1.000, 0.000, 2.67],
+         [168.0, 0.2, 0.8,  0.0, 0.966,-0.259, 3.33]
+       ],
+       "static_features": [0.45, 0.62]
+     }'
+```
+
+#### Response (JSON)
 ```json
 {
   "danger_probability": 0.7158,
