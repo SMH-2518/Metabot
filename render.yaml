@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: cgm-medical-ai
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: MODEL_PATH
+        value: models/hybrid_cgm_brain_quantized.tflite
