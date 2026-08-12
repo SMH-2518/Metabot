@@ -82,12 +82,12 @@ Metabot/
 
 ```mermaid
 flowchart TD
-    Client["Patient Sensor / Client App"] -->|3-Hour Window 6x7 Matrix| Main["main.py (FastAPI Endpoint)"]
-    Main -->|Shape Validation| Model["model.py (CGMModelService)"]
-    Model -->|TFLite Tensor Input (1,6,7) & (1,2)| TFLite["models/hybrid_cgm_brain_quantized.tflite"]
-    TFLite -->|Predicts Next 30m Target| Model
-    Model -->|Risk Classification & Recommendations| Main
-    Main -->|JSON Prediction Response| Client
+    Client["Patient Sensor / Client App"] -->|"3-Hour Window 6x7 Matrix"| Main["main.py (FastAPI Endpoint)"]
+    Main -->|"Shape Validation"| Model["model.py (CGMModelService)"]
+    Model -->|"TFLite Tensor Input (1,6,7) & (1,2)"| TFLite["models/hybrid_cgm_brain_quantized.tflite"]
+    TFLite -->|"Predicts Next 30m Target"| Model
+    Model -->|"Risk Classification & Recommendations"| Main
+    Main -->|"JSON Prediction Response"| Client
 ```
 
 ---
