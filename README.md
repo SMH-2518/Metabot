@@ -46,7 +46,9 @@ The proactive glucose forecasting system utilizes a two-tier evaluation framewor
 ---
 
 ### Tier 2: Patient-Specific Transfer Learning (Personalized Model)
-*Prototyped and evaluated offline in Kaggle using 2 months of history for veteran patients. By freezing temporal feature extractors and fine-tuning only the decision head, the model adapts to individual metabolic patterns.*
+*Prototyped and evaluated offline in Kaggle using 2 months of history for veteran patients. By freezing temporal feature extractors and fine-tuning only the decision head with class weights and dynamic threshold calibration, the model adapts cleanly to individual metabolic patterns while separating specific intervention targets.*
+
+**Overall Accuracy:** `0.85`
 
 | Class | Precision | Recall | F1-Score | Support |
 | :--- | :---: | :---: | :---: | :---: |
@@ -55,7 +57,7 @@ The proactive glucose forecasting system utilizes a two-tier evaluation framewor
 | **HIGH ALERT (>180 mg/dL)** | 0.93 | 0.61 | 0.74 | 707 |
 | **Overall Accuracy** | | | **0.85** | 2,432 |
 
-* **The Takeaway:** Transfer learning resolves the population-level blind spots. Low-alert precision jumps to **83%** (drastically reducing false alarms), while low-alert catch rate increases significantly, proving that personal history is required for precise clinical safety.
+* **The Takeaway:** Transfer learning resolves the population-level blind spots. Low-alert precision jumps to **83%** (drastically reducing false alarms), while the individual catch rates for both hypoglycemia and hyperglycemia increase significantly, proving that personal history is required for precise clinical safety.
 
 ---
 
